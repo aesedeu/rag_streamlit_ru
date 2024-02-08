@@ -31,7 +31,8 @@ tokenizer.padding_side = 'right' # ???
 
 @st.cache_resource
 def connection_get_chroma_client():
-    get_chroma_client()
+    chroma_client = get_chroma_client()
+    return chroma_client
 
 @st.cache_resource
 def connection_initialize_model():

@@ -3,6 +3,7 @@ import streamlit as st
 # from lib.postgres_setup import upload_to_postgres
 import time
 
+
 st.markdown("<h1 style='text-align: center; color: orange;'>Тестовый чат-бот проекта Столото </h1>", unsafe_allow_html=True)
 st.markdown("<h6 style='text-align: right; color: grey;'>Built by Synchro </a></h6>", unsafe_allow_html=True)
 
@@ -17,13 +18,18 @@ st.markdown("<div style='text-align: left; color:red;'>Температура г
 st.markdown("<div style='text-align: left; color:red;'>Ограничение тематики диалога: НЕТ </div>", unsafe_allow_html=True)
 st.markdown("<div style='text-align: left; color:red;'>ПД пользователя в промпте: НЕТ </div>", unsafe_allow_html=True)
 
-
+def foo():
+    return 100500
 
 @st.cache_resource
 def test_data():
+    x = foo()
     print('TEST_TEST_TEST')
     time.sleep(5)
-    return 10*3
+    result = 10*3 + x
+    return result
+
+test = test_data()
 
 # Инициализируем историю сообщений
 if "messages" not in st.session_state:
@@ -54,7 +60,6 @@ if prompt:
             #     user_id=906
             # )
             # response = api_response['ai_response'] + f"\nВремя генерации ответа: {api_response['response_time']} сек"
-            test = test_data()
             response = prompt + f"\nВремя генерации ответа: {test} сек"
             
             # Добавляем ответ в postgres
