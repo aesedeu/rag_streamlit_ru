@@ -12,7 +12,8 @@ import numpy as np
 import pandas as pd
 import os
 from dotenv import load_dotenv
-from lib.postgres_setup import upload_to_postgres
+# from lib.postgres_setup import upload_to_postgres
+
 
 app = FastAPI()
 # Ключ для проверки API
@@ -46,7 +47,7 @@ async def add_numbers(
     start_time = dt.datetime.now().strftime("%H:%M:%S")
     client_host = request.client.host
     ai_response = income_message.question_string + ' GOT!!!'
-    time.sleep(10)
+    time.sleep(0.5)
     end = time.time()
     time_spent = round((end-start), 2)
     time_spent
@@ -59,15 +60,17 @@ async def add_numbers(
         "ai_response": ai_response,
         "response_time": time_spent
     }
-    # Добавляем ответ в postgres
-    upload_to_postgres(result)
+    # # Добавляем ответ в postgres
+    # upload_to_postgres(result)
 
     return result
 
 if __name__ == "__main__":
+    
     import uvicorn
-    uvicorn.run(app,
+    uvicorn.run("app_api_no_llm:app",
                 host="0.0.0.0",
                 port=8008,
-                # workers=4
+                # log_level="debug", # info
+                workers=4
                 )
