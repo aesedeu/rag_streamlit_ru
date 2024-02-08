@@ -1,6 +1,12 @@
 import streamlit as st
-from lib.llm_api_response import get_llm_api_response
-from lib.postgres_setup import upload_to_postgres
+# from lib.llm_api_response import get_llm_api_response
+# from lib.postgres_setup import upload_to_postgres
+from lib.vector_db_setup import get_texts, upload_to_vectorstore, vectorstore_query, get_chroma_client
+from lib.llm_setup import initialize_model, generate_llm_response
+from peft import PeftConfig
+from transformers import AutoTokenizer
+
+import time
 
 st.markdown("<h1 style='text-align: center; color: orange;'>Тестовый чат-бот проекта Столото </h1>", unsafe_allow_html=True)
 st.markdown("<h6 style='text-align: right; color: grey;'>Built by Synchro </a></h6>", unsafe_allow_html=True)
@@ -15,6 +21,30 @@ st.markdown("<div style='text-align: left; color:red;'>GPU: nvidia-A100-40GB </d
 st.markdown("<div style='text-align: left; color:red;'>Температура генерации: 0.1 </div>", unsafe_allow_html=True)
 st.markdown("<div style='text-align: left; color:red;'>Ограничение тематики диалога: НЕТ </div>", unsafe_allow_html=True)
 st.markdown("<div style='text-align: left; color:red;'>ПД пользователя в промпте: НЕТ </div>", unsafe_allow_html=True)
+
+# Настройка токенизатора
+tokenizer = AutoTokenizer.from_pretrained(PeftConfig.from_pretrained("IlyaGusev/saiga_mistral_7b"))
+tokenizer.bos_token = "<s>"
+tokenizer.eos_token = "</s>"
+tokenizer.pad_token = tokenizer.eos_token
+tokenizer.padding_side = 'right' # ???
+
+@st.cache_resource
+def connection_get_chroma_client():
+    get_chroma_client()
+
+@st.cache_resource
+def connection_initialize_model():
+    model = initialize_model(
+        base_model=PeftConfig.from_pretrained("IlyaGusev/saiga_mistral_7b"),
+        lora_adapter="IlyaGusev/saiga_mistral_7b"
+    )
+    return model
+
+
+collection = connection_get_chroma_client().get_collection('book')
+model = connection_initialize_model()
+
 
 # Инициализируем историю сообщений
 if "messages" not in st.session_state:
@@ -39,12 +69,12 @@ if prompt:
     # Отвечаем пользователю
     with st.chat_message(name="assistant", avatar="./icons/assistant_icon.jpg"):
         with st.spinner('Собираю информацию по Вашему вопросу...⏳'):
-            api_response = get_llm_api_response(
+            response = generate_llm_response(
                 question=prompt,
-                api_key="131e12aa46252f4da6920dd2feccc94978688eab3a96337ba4b67a945eac1308",
-                user_id=906
+                model=model,
+                collection=collection,
+                tokenizer=tokenizer
             )
-            response = api_response['ai_response'] + f"\nВремя генерации ответа: {api_response['response_time']} сек"
             
             # Добавляем ответ в postgres
             # upload_to_postgres(api_response)

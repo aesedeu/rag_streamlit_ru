@@ -46,7 +46,10 @@ async def add_numbers(
     start = time.time()
     start_time = dt.datetime.now().strftime("%H:%M:%S")
     client_host = request.client.host
+    
+    # ГЕНЕРАЦИЯ ОТВЕТА ПОЛЬЗОВАТЕЛЮ
     ai_response = income_message.question_string + ' GOT!!!'
+    
     time.sleep(0.5)
     end = time.time()
     time_spent = round((end-start), 2)
