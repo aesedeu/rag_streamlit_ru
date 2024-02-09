@@ -9,10 +9,10 @@ st.markdown("<h6 style='text-align: right; color: grey;'>Built by Synchro </a></
 
 st.markdown("<div style='text-align: left; color:red;'>Версия: v0.1 </div>", unsafe_allow_html=True)
 st.markdown("<div style='text-align: left; color:red;'>Алгоритм: RAG </div>", unsafe_allow_html=True)
-st.markdown("<div style='text-align: left; color:red;'>Векторное хранилище: chromadb </div>", unsafe_allow_html=True)
-st.markdown("<div style='text-align: left; color:red;'>Базовая модель: OpenOrca-7B </div>", unsafe_allow_html=True)
+st.markdown("<div style='text-align: left; color:red;'>Векторное хранилище: --HIDDEN-- </div>", unsafe_allow_html=True)
+st.markdown("<div style='text-align: left; color:red;'>Базовая модель: --HIDDEN-- </div>", unsafe_allow_html=True)
 st.markdown("<div style='text-align: left; color:red;'>Finetuning: LoRA + PEFT </div>", unsafe_allow_html=True)
-st.markdown("<div style='text-align: left; color:red;'>Функция создания эмбеддингов: all-MiniLM-L6-v2 </div>", unsafe_allow_html=True)
+st.markdown("<div style='text-align: left; color:red;'>Функция создания эмбеддингов: --HIDDEN-- </div>", unsafe_allow_html=True)
 st.markdown("<div style='text-align: left; color:red;'>GPU: nvidia-A100-40GB </div>", unsafe_allow_html=True)
 st.markdown("<div style='text-align: left; color:red;'>Температура генерации: 0.1 </div>", unsafe_allow_html=True)
 st.markdown("<div style='text-align: left; color:red;'>Ограничение тематики диалога: НЕТ </div>", unsafe_allow_html=True)
@@ -25,7 +25,7 @@ def foo():
 def test_data():
     x = foo()
     print('TEST_TEST_TEST')
-    time.sleep(5)
+    time.sleep(2)
     result = 10*3 + x
     return result
 

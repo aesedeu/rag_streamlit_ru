@@ -13,21 +13,24 @@ st.markdown("<h6 style='text-align: right; color: grey;'>Built by Synchro </a></
 
 st.markdown("<div style='text-align: left; color:red;'>Версия: v0.1 </div>", unsafe_allow_html=True)
 st.markdown("<div style='text-align: left; color:red;'>Алгоритм: RAG </div>", unsafe_allow_html=True)
-st.markdown("<div style='text-align: left; color:red;'>Векторное хранилище: chromadb </div>", unsafe_allow_html=True)
-st.markdown("<div style='text-align: left; color:red;'>Базовая модель: OpenOrca-7B </div>", unsafe_allow_html=True)
+st.markdown("<div style='text-align: left; color:red;'>Векторное хранилище: --HIDDEN-- </div>", unsafe_allow_html=True)
+st.markdown("<div style='text-align: left; color:red;'>Базовая модель: --HIDDEN-- </div>", unsafe_allow_html=True)
 st.markdown("<div style='text-align: left; color:red;'>Finetuning: LoRA + PEFT </div>", unsafe_allow_html=True)
-st.markdown("<div style='text-align: left; color:red;'>Функция создания эмбеддингов: all-MiniLM-L6-v2 </div>", unsafe_allow_html=True)
+st.markdown("<div style='text-align: left; color:red;'>Функция создания эмбеддингов: --HIDDEN-- </div>", unsafe_allow_html=True)
 st.markdown("<div style='text-align: left; color:red;'>GPU: nvidia-A100-40GB </div>", unsafe_allow_html=True)
 st.markdown("<div style='text-align: left; color:red;'>Температура генерации: 0.1 </div>", unsafe_allow_html=True)
 st.markdown("<div style='text-align: left; color:red;'>Ограничение тематики диалога: НЕТ </div>", unsafe_allow_html=True)
 st.markdown("<div style='text-align: left; color:red;'>ПД пользователя в промпте: НЕТ </div>", unsafe_allow_html=True)
 
 # Настройка токенизатора
-tokenizer = AutoTokenizer.from_pretrained(PeftConfig.from_pretrained("IlyaGusev/saiga_mistral_7b"))
-tokenizer.bos_token = "<s>"
-tokenizer.eos_token = "</s>"
-tokenizer.pad_token = tokenizer.eos_token
-tokenizer.padding_side = 'right' # ???
+@st.cache_resource
+def connection_tokenizer():
+    tokenizer = AutoTokenizer.from_pretrained("Open-Orca/Mistral-7B-OpenOrca")
+    tokenizer.bos_token = "<s>"
+    tokenizer.eos_token = "</s>"
+    tokenizer.pad_token = tokenizer.eos_token
+    tokenizer.padding_side = 'right' # ???
+    return tokenizer
 
 @st.cache_resource
 def connection_get_chroma_client():
@@ -37,12 +40,12 @@ def connection_get_chroma_client():
 @st.cache_resource
 def connection_initialize_model():
     model = initialize_model(
-        base_model=PeftConfig.from_pretrained("IlyaGusev/saiga_mistral_7b"),
+        base_model="Open-Orca/Mistral-7B-OpenOrca",
         lora_adapter="IlyaGusev/saiga_mistral_7b"
     )
     return model
 
-
+tokenizer = connection_tokenizer()
 collection = connection_get_chroma_client().get_collection('book')
 model = connection_initialize_model()
 
