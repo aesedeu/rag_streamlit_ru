@@ -9,7 +9,7 @@ from transformers import AutoTokenizer
 import time
 
 st.markdown("<h1 style='text-align: center; color: orange;'>Тестовый чат-бот проекта Столото </h1>", unsafe_allow_html=True)
-st.markdown("<h6 style='text-align: right; color: grey;'>Built by Synchro </a></h6>", unsafe_allow_html=True)
+st.markdown("<h6 style='text-align: right; color: grey;'>Built by <a href='https://synchro.pro/'>Synchro</a></h6>", unsafe_allow_html=True)
 
 st.markdown("<div style='text-align: left; color:red;'>Версия: v0.1 </div>", unsafe_allow_html=True)
 st.markdown("<div style='text-align: left; color:red;'>Алгоритм: RAG </div>", unsafe_allow_html=True)

@@ -77,14 +77,15 @@ def generate_llm_response(question, model, collection, tokenizer):
         bos_token_id = 1,
         do_sample = True,
         eos_token_id = 2,
-        max_length = 1024,
+        max_length = 2048,
+        max_new_tokens = 512,
         repetition_penalty=1.1,
         # length_penalty=0.1,
         no_repeat_ngram_size=15,
         pad_token_id = 2,
         temperature = 0.1,
         # top_p = 0.9,
-        # top_k= 40,
+        top_k= 40,
         # low_memory=True
     )
 
