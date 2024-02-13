@@ -50,7 +50,7 @@ try:
     model = initialize_model(
         base_model=base_model,
         lora_adapter=lora_adapter,
-        bnb=False
+        # bnb=True
     )
 except Exception as e:
     print(e)

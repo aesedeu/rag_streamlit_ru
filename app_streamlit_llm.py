@@ -21,11 +21,17 @@ st.markdown("<div style='text-align: left; color:red;'>GPU: nvidia-A100-40GB </d
 st.markdown("<div style='text-align: left; color:red;'>Температура генерации: 0.1 </div>", unsafe_allow_html=True)
 st.markdown("<div style='text-align: left; color:red;'>Ограничение тематики диалога: НЕТ </div>", unsafe_allow_html=True)
 st.markdown("<div style='text-align: left; color:red;'>ПД пользователя в промпте: НЕТ </div>", unsafe_allow_html=True)
+st.markdown("<div style='text-align: left; color:orange;'> БОТ НЕ ЗАПОМИНАЕТ ПРЕДЫДУЩИЕ СООБЩЕНИЯ! </div>", unsafe_allow_html=True)
 
 # Настройка токенизатора
 @st.cache_resource
 def connection_tokenizer():
-    tokenizer = AutoTokenizer.from_pretrained("Open-Orca/Mistral-7B-OpenOrca")
+    # lora_adapter="IlyaGusev/saiga_mistral_7b"
+    lora_adapter = "IlyaGusev/saiga2_13b_lora"
+    config = PeftConfig.from_pretrained(lora_adapter)
+    base_model = config.base_model_name_or_path
+
+    tokenizer = AutoTokenizer.from_pretrained(base_model)
     tokenizer.bos_token = "<s>"
     tokenizer.eos_token = "</s>"
     tokenizer.pad_token = tokenizer.eos_token
@@ -39,10 +45,14 @@ def connection_get_chroma_client():
 
 @st.cache_resource
 def connection_initialize_model():
+    # lora_adapter="IlyaGusev/saiga_mistral_7b"
+    lora_adapter = "IlyaGusev/saiga2_13b_lora"
+    config = PeftConfig.from_pretrained(lora_adapter)
+    base_model = config.base_model_name_or_path
     model = initialize_model(
-        base_model="Open-Orca/Mistral-7B-OpenOrca",
-        lora_adapter="IlyaGusev/saiga_mistral_7b",
-        bnb=False
+        base_model=base_model,
+        lora_adapter=lora_adapter,
+        # bnb=False
     )
     return model
 

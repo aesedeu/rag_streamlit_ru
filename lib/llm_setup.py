@@ -2,6 +2,9 @@ import torch
 from peft import PeftModel, PeftConfig
 from transformers import AutoModelForCausalLM, AutoTokenizer, GenerationConfig, BitsAndBytesConfig
 from lib.vector_db_setup import vectorstore_query
+import json
+import datetime
+import time
 
 def create_input_message(question, tokenizer, collection):
     """
@@ -13,16 +16,19 @@ def create_input_message(question, tokenizer, collection):
     collection: str - название коллекции векторов"""
 
     vector_db_response = vectorstore_query(
-        collection,
-        question = question,
-        n_results=3
+        collection=collection,
+        collection_type='document',
+        question=question,
+        n_results=5
     )
-    SYSTEM_PROMPT = f"Ты - доброжелательный русскоязычный ассистент Степан. Отвечаешь только на вопросы о лотереях. Тебя создали в компании Синхро. Ты отвечаешь на вопрос, используя только следующую данную тебе информацию.\nИнформация: {vector_db_response}"
+    SYSTEM_PROMPT = f"""Ты - русскоязычный ассистент Степан. Отвечаешь только на вопросы о лотереях, используя только эту информацию: {vector_db_response}."""
+    # SYSTEM_PROMPT = f"""Ты - пьяный пират, который ищет свой корабль. Разговаривай как пьяный пират."""
+
     QUESTION = question
     chat = [
         {"role": "system", "content": f"{SYSTEM_PROMPT}"},
-        {"role": "user", "content": f"{QUESTION}"},
-        {"role": "assistant", "content":""}
+        {"role": "user", "content": f"Мой вопрос: {QUESTION}"},
+        {"role": "assistant", "content":"Ответ на вопрос: "}
     ]
 
     input_message = ""
@@ -54,7 +60,13 @@ def initialize_model(base_model, lora_adapter, bnb=False):
             # load_in_8bit=True,
             # load_in_4bit=True,
             quantization_config=bnb_config,
-            torch_dtype=torch.float16,
+            # torch_dtype=torch.float16,
+            device_map="cuda"
+        )
+        model = PeftModel.from_pretrained(
+            model,
+            lora_adapter,
+            torch_dtype="auto",
             device_map="cuda"
         )
     else:
@@ -65,13 +77,12 @@ def initialize_model(base_model, lora_adapter, bnb=False):
             torch_dtype=torch.float16,
             device_map="cuda"
         )
-
-    model = PeftModel.from_pretrained(
-        model,
-        lora_adapter,
-        torch_dtype=torch.float16,
-        device_map="cuda"
-    )
+        model = PeftModel.from_pretrained(
+            model,
+            lora_adapter,
+            torch_dtype=torch.float16,
+            device_map="cuda"
+        )
 
     model.eval()
     model = model.merge_and_unload() #  ОБЯЗАТЕЛЬНО!!! После загрузки модели в память, нужно вызвать метод merge_and_unload() для слияния адаптеров и выгрузки модели из памяти
@@ -88,6 +99,8 @@ def generate_llm_response(question, model, collection, tokenizer):
     collection: str - название коллекции векторов
     tokenizer: AutoTokenizer - токенизатор
     """
+    start = time.time()
+    
     input_message = create_input_message(question, tokenizer, collection)
     input_data = tokenizer(input_message, return_tensors="pt", add_special_tokens=False)
     input_data = {k: v.to("cuda:0") for k, v in input_data.items()}
@@ -97,14 +110,14 @@ def generate_llm_response(question, model, collection, tokenizer):
         do_sample = True,
         eos_token_id = 2,
         max_length = 2048,
-        max_new_tokens = 512,
+        max_new_tokens = 256,
         repetition_penalty=1.1,
         # length_penalty=0.1,
         no_repeat_ngram_size=15,
         pad_token_id = 2,
         temperature = 0.1,
-        # top_p = 0.9,
-        top_k= 40,
+        top_p = 0.9,
+        # top_k= 40,
         # low_memory=True
     )
 
@@ -115,5 +128,30 @@ def generate_llm_response(question, model, collection, tokenizer):
     
     output_data = output_data[len(input_data["input_ids"][0]):]
     output_message = tokenizer.decode(output_data, skip_special_tokens=True)
+
+    end = time.time()
+    time_spent = round((end-start), 2)
+
+    filename = "dialogs/q_a.json"
+    # Читаем существующие данные в моем джейсоне
+    try:
+        with open(filename, "r") as file:
+            existing_data = json.load(file)
+    except FileNotFoundError:
+        existing_data = {}  # Используем пустой словарь
+
+    # Формирую новую запись в джейсонее
+    timestamp = datetime.datetime.now().timestamp()
+    existing_data[str(timestamp)] = {
+        "date": datetime.datetime.now().strftime("%Y-%m-%d"),
+        "time_utc": datetime.datetime.now().strftime("%H:%M:%S"),
+        "question": question,  # Добавляем отправленные данные
+        "response": output_message,
+        "time_spent": time_spent
+    }
+
+    # Сохраняю обновленные данные
+    with open(filename, "w") as file:
+        json.dump(existing_data, file, indent=4)
 
     return output_message

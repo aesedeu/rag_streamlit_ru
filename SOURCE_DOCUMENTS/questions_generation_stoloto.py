@@ -591,6 +591,24 @@ for q in questions:
         "url": False}
     documents.append(temp_dict)
 
+reply = """Правила лотереи «Забава от Русского лото» https://www.stoloto.ru/zabava/rules?int=faq"""
+reply = reply.replace("\n", "")
+questions = [
+    "Как играть в забаву",
+    "правила Забавы",
+    "как играть выиграть в забаву",
+    "сколько стоит лотерея забава",
+    "цена билета забавы русского лото"
+]
+
+for q in questions:
+    temp_dict = {
+        "id": str(next(it)),
+        "question": q,
+        "answer": reply,
+        "url": False}
+    documents.append(temp_dict)
+
 
 # создаем из наших документов датафрейм
 df = pd.DataFrame(documents)
