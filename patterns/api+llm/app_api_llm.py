@@ -49,7 +49,8 @@ tokenizer.padding_side = 'right' # ???
 try:
     model = initialize_model(
         base_model=base_model,
-        lora_adapter=lora_adapter
+        lora_adapter=lora_adapter,
+        bnb=False
     )
 except Exception as e:
     print(e)
@@ -107,7 +108,8 @@ async def add_numbers(
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, # "app_api_llm:app"
+    uvicorn.run(app,
+                # "app_api_llm:app"
                 host="0.0.0.0",
                 port=8008,
                 # workers=4

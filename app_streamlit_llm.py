@@ -41,7 +41,8 @@ def connection_get_chroma_client():
 def connection_initialize_model():
     model = initialize_model(
         base_model="Open-Orca/Mistral-7B-OpenOrca",
-        lora_adapter="IlyaGusev/saiga_mistral_7b"
+        lora_adapter="IlyaGusev/saiga_mistral_7b",
+        bnb=False
     )
     return model
 

@@ -1,6 +1,6 @@
 import torch
 from peft import PeftModel, PeftConfig
-from transformers import AutoModelForCausalLM, AutoTokenizer, GenerationConfig
+from transformers import AutoModelForCausalLM, AutoTokenizer, GenerationConfig, BitsAndBytesConfig
 from lib.vector_db_setup import vectorstore_query
 
 def create_input_message(question, tokenizer, collection):
@@ -32,20 +32,39 @@ def create_input_message(question, tokenizer, collection):
 
     return input_message
 
-def initialize_model(base_model, lora_adapter):
+def initialize_model(base_model, lora_adapter, bnb=False):
     """
     Инициализация модели
     
     Args:
     base_model: str - название базовой модели
-    lora_adapter: str - название адаптера LoRA"""
-    model = AutoModelForCausalLM.from_pretrained(
-        base_model,
-        # load_in_8bit=True,
-        # load_in_4bit=True,
-        torch_dtype=torch.float16,
-        device_map="cuda"
+    lora_adapter: str - название адаптера LoRA
+    bnb: bool - применение квантизации модели с помощью BitsAndBytes
+    """
+    bnb_config = BitsAndBytesConfig(
+        load_in_4bit=False, # Загружает модель в 4-битном формате для уменьшения использования памяти.
+        load_in_8bit=True,
+        bnb_4bit_quant_type="fp4", # Указывает тип квантования, в данном случае "nf4" (nf4/dfq/qat/ptq/fp4)
+        bnb_4bit_compute_dtype="float16", # Устанавливает тип данных для вычислений в 4-битном формате как float16.
+        bnb_4bit_use_double_quant=False # Указывает, что не используется двойное квантование.
     )
+    if bnb==True:
+        model = AutoModelForCausalLM.from_pretrained(
+            base_model,
+            # load_in_8bit=True,
+            # load_in_4bit=True,
+            quantization_config=bnb_config,
+            torch_dtype=torch.float16,
+            device_map="cuda"
+        )
+    else:
+        model = AutoModelForCausalLM.from_pretrained(
+            base_model,
+            # load_in_8bit=True,
+            # load_in_4bit=True,
+            torch_dtype=torch.float16,
+            device_map="cuda"
+        )
 
     model = PeftModel.from_pretrained(
         model,
