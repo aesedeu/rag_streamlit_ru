@@ -88,7 +88,8 @@ if prompt:
                 question=prompt,
                 model=model,
                 collection=collection,
-                tokenizer=tokenizer
+                tokenizer=tokenizer,
+                source_file_type='table'
             )
             
             # Добавляем ответ в postgres

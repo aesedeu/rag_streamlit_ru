@@ -6,7 +6,7 @@ import json
 import datetime
 import time
 
-def create_input_message(question, tokenizer, collection):
+def create_input_message(question, tokenizer, collection, source_file_type):
     """
     Создание входного сообщения для модели
     
@@ -17,7 +17,7 @@ def create_input_message(question, tokenizer, collection):
 
     vector_db_response = vectorstore_query(
         collection=collection,
-        source_file_type='table',
+        source_file_type=source_file_type,
         question=question,
         n_results=5
     )
@@ -89,7 +89,7 @@ def initialize_model(base_model, lora_adapter, bnb=False):
 
     return model
 
-def generate_llm_response(question, model, collection, tokenizer):
+def generate_llm_response(question, model, collection, tokenizer, source_file_type):
     """
     Генерация ответа на вопрос с помощью модели
     
@@ -101,7 +101,7 @@ def generate_llm_response(question, model, collection, tokenizer):
     """
     start = time.time()
     
-    input_message = create_input_message(question, tokenizer, collection)
+    input_message = create_input_message(question, tokenizer, collection, source_file_type)
     input_data = tokenizer(input_message, return_tensors="pt", add_special_tokens=False)
     input_data = {k: v.to("cuda:0") for k, v in input_data.items()}
 

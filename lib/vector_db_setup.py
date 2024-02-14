@@ -120,6 +120,8 @@ def upload_to_vectorstore(texts, collection_name):
             counter = 0
             for doc in texts:
                 counter += 1
+                if counter % 100 == 0:
+                    print(f"uploaded {counter} of {len(texts)}")
                 collection.add(
                     documents=doc.page_content,
                     metadatas=doc.metadata,
@@ -168,32 +170,22 @@ def vectorstore_query(collection, source_file_type, question, n_results):
         # убираем одинаковые ответы
         response_list = []
         for repl in response['metadatas'][0]:
-            response_list.append(repl['answer'])
-
-        response_list = set(response_list)
+            response_list.append(repl['answer'])   
+        response_list = list(set(response_list))
 
         # собираем итоговый ответ
-        vector_db_response = ""
-        for repl in response_list:
-            vector_db_response += repl
-            # if repl['url'] is not False:
-            #     full_response += f" Ссылка на подробную информацию: {repl['url']}\n"
-            # else:
-            #     full_response += "\n"
+        vector_db_response = " ".join(response_list)
         
-        return vector_db_response
     
     elif source_file_type == 'text':
         response = collection.query(
-        # query_embeddings=embedding_function(question),
-        query_texts=question,
-        n_results=n_results,
-        # include=["documents"],
-        # where={"metadata_field":"is_equal_to_this"}, # где искать
-        # where_document={"$contains":"$search_string"}
-    )
+            query_texts=question,
+            n_results=n_results,
+            # include=["documents"],
+        )
         vector_db_response = " ".join(response["documents"][0])
-        return vector_db_response
+
+    return vector_db_response
 
 
 
