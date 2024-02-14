@@ -57,7 +57,7 @@ def connection_initialize_model():
     return model
 
 tokenizer = connection_tokenizer()
-collection = connection_get_chroma_client().get_collection('book')
+collection = connection_get_chroma_client().get_collection('book') # !!!!!!!!! УКАЗАТЬ ИЗ КАКОЙ КОЛЛЕКЦИИ !!!!!!!!!!
 model = connection_initialize_model()
 
 
@@ -89,7 +89,7 @@ if prompt:
                 model=model,
                 collection=collection,
                 tokenizer=tokenizer,
-                source_file_type='table'
+                source_file_type='table' # !!!!!!!!! УКАЗАТЬ ТИП ИСХОДНОГО ФАЙЛА КОЛЛЕКЦИИ !!!!!!!!!!
             )
             
             # Добавляем ответ в postgres
