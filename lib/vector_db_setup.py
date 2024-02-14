@@ -3,7 +3,7 @@ import numpy as np
 import chromadb
 from chromadb.config import Settings
 from chromadb.utils import embedding_functions
-from langchain.document_loaders import DataFrameLoader
+from langchain_community.document_loaders import DataFrameLoader, TextLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter 
 
 
@@ -11,10 +11,10 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 
 def get_texts(
-        split,
-        page_content_column=None,
-        chunk_size=500,
-        chunk_overlap=500
+        file_name,
+        content_column=None,
+        chunk_size=300,
+        chunk_overlap=300
     ):
 
     """
@@ -24,92 +24,52 @@ def get_texts(
     chunk_size: int, default=500 - the size of the chunks to split the documents into
     chunk_overlap: int, default=500 - the overlap between the chunks
     """
+    dataset_path = "./SOURCE_DOCUMENTS/" + file_name
 
-    if split == 'document':
-        dataset_path = input("Введите относительный путь до файла в формате CSV: ")
-        if len(dataset_path) > 0:
-            try:
-                df = pd.read_csv(dataset_path, dtype='object')
-                loader = DataFrameLoader(df, page_content_column=page_content_column)
-                documents = loader.load()
+    if dataset_path.endswith('.csv'):
+        print(f'Выбраны данные из файла: {dataset_path}')
+        try:
+            df = pd.read_csv(dataset_path, dtype='object')
+            loader = DataFrameLoader(df, page_content_column=content_column)
+            documents = loader.load()
 
-                rec_text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size,
-                                                        chunk_overlap=chunk_overlap,
-                                                        length_function=len
-                                                        )
-                texts = rec_text_splitter.split_documents(documents)
-            except:
-                print("Некорректный путь к датасету или произошла ошибка при обработке")
-            else:
-                print('Датасет успешно загружен')
+            rec_text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size,
+                                                    chunk_overlap=chunk_overlap,
+                                                    length_function=len
+                                                    )
+            texts = rec_text_splitter.split_documents(documents)
+        except Exception as e:
+            print(e)
         else:
-            print('Применяю датасет по умолчаюнию: ./SOURCE_DOCUMENTS/questions_stolot.csv')
-            dataset_path = "./SOURCE_DOCUMENTS/questions_stolot.csv"
-            try:
-                df = pd.read_csv(
-                    dataset_path,
-                    dtype='object'
-                )
-                loader = DataFrameLoader(
-                    df,
-                    page_content_column=page_content_column
-                )
-                documents = loader.load()
-
-                rec_text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size,
-                                                        chunk_overlap=chunk_overlap,
-                                                        length_function=len
-                                                        )
-                texts = rec_text_splitter.split_documents(documents)
-            except:
-                print('Датасет не найден или произошла ошибка при обработке')
-            else:
-                print('Датасет успешно создан!')
+            print('Загрузка датасета: SUCCESS')
         return texts
-    
-    elif split == 'text':
-        dataset_path = input("Введите относительный путь до файла в формате TXT: ")
-        if len(dataset_path) > 0:
-            try:
-                with open(dataset_path, 'r') as file:
-                    text = file.readlines()
-                    text = ''.join(text)
-                rec_text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size,
-                                                                chunk_overlap=chunk_overlap,
-                                                                length_function=len
-                                                                )
-                texts = rec_text_splitter.split_text(text)
-                print(f'Total number of chunks: {len(texts)}\n')
-            except:
-                print('Датасет не найден или произошла ошибка при обработке')
-            else:
-                print('Датасет успешно загружен')
+    elif dataset_path.endswith('.txt'):
+        print(f'Выбраны данные из файла: {dataset_path}')
+        try:
+            loader = TextLoader(dataset_path)
+            documents = loader.load()
+            text_splitter = RecursiveCharacterTextSplitter(chunk_size=300, chunk_overlap=300)
+            texts = text_splitter.split_documents(documents)
+            # with open(dataset_path, 'r') as file:
+            #     text = file.readlines()
+            #     text = ''.join(text)
+            # rec_text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size,
+            #                                                 chunk_overlap=chunk_overlap,
+            #                                                 length_function=len
+            #                                                 )
+            # texts = rec_text_splitter.split_text(text)
+            # print(f'Total number of chunks: {len(texts)}\n')
+        except Exception as e:
+            print(e)
         else:
-            print('Применяю датасет по умолчаюнию: ./SOURCE_DOCUMENTS/answers_stoloto.txt')
-            dataset_path = "./SOURCE_DOCUMENTS/answers_stoloto.txt"
-            try:
-                with open(dataset_path, 'r') as file:
-                    text = file.readlines()
-
-                    text = ''.join(text)
-                rec_text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size,
-                                                                chunk_overlap=chunk_overlap,
-                                                                length_function=len
-                                                                )
-                texts = rec_text_splitter.split_text(text)
-                print(f'Total number of chunks: {len(texts)}\n')
-            except:
-                print('Датасет не найден или произошла ошибка при обработке')
-            else:
-                print('Датасет успешно создан!')
-            
+            print('Загрузка датасета: SUCCESS')            
         return texts
 
         
 
 
 
-def upload_to_vectorstore(texts, data_type, collection_name=None):
+def upload_to_vectorstore(texts, collection_name):
 
     """
     This function is used to upload the data to the vector store.
@@ -135,70 +95,40 @@ def upload_to_vectorstore(texts, data_type, collection_name=None):
                 chroma_server_host='localhost',
                 chroma_server_http_port='8000')
             )
-            print("Подключение к векторной БД: SUCCESS")
+            print("Подключение к CHROMADB: SUCCESS")
         except Exception as e:
-            print("Ошибка при подключении к векторной БД:", e)
+            print("Ошибка при подключении к CHROMADB:", e)
             flag = False
     
     if flag:
+        for i in chroma_client.list_collections():
+            if i.name == collection_name:
+                chroma_client.delete_collection(collection_name)
+                print(f'Была обнаружена и удалена существующая коллекция с именем "{collection_name}"')
         try:
-            if collection_name is not None:
-                try:
-                    chroma_client.delete_collection(collection_name)
-                    collection = chroma_client.get_or_create_collection(name=collection_name,
-                                                    metadata={"hnsw:space": "cosine"},
-                                                    embedding_function=embedding_function
-                                                    )
-                except:
-                    collection = chroma_client.get_or_create_collection(name=collection_name,
-                                                    metadata={"hnsw:space": "cosine"},
-                                                    embedding_function=embedding_function
-                                                    )
-            else:
-                collection_name = 'book'
-                try:
-                    chroma_client.delete_collection(collection_name)
-                    collection = chroma_client.get_or_create_collection(name=collection_name,
-                                                    metadata={"hnsw:space": "cosine"},
-                                                    embedding_function=embedding_function
-                                                    )
-                except:
-                    collection = chroma_client.get_or_create_collection(name=collection_name,
-                                                    metadata={"hnsw:space": "cosine"},
-                                                    embedding_function=embedding_function
-                                                    )
-                    
+            collection = chroma_client.get_or_create_collection(name=collection_name,
+                                            metadata={"hnsw:space": "cosine"},
+                                            embedding_function=embedding_function
+                                            )
             print(f"Создание коллекции {collection_name}: SUCCESS")
         except Exception as e:
             print("Ошибка при создании коллекции:", e)
             flag = False
     
-    if flag and data_type == 'document':
-        try:
-            for doc in texts:
-                collection.add(
-                    documents=doc.page_content,
-                    metadatas=doc.metadata,
-                    ids=doc.metadata['id']
-                )
-            print("Загрузка данных в векторную БД: SUCCESS")
-        except Exception as e:
-            print("Ошибка при загрузке данных в векторную БД:", e)
-            
-    if flag and data_type == 'text':
+    if flag:
         try:
             counter = 0
             for doc in texts:
                 counter += 1
-                print(f'Done: {round(counter * 100 / len(texts), 2)}%')
                 collection.add(
-                    documents=doc,
-                    # metadatas=doc.metadata,
+                    documents=doc.page_content,
+                    metadatas=doc.metadata,
                     ids=['id'+str(counter)]
+                    # ids=doc.metadata['id']
                 )
-            print("Загрузка данных в векторную БД: SUCCESS")
+            print("Загрузка данных в CHROMADB: SUCCESS")
         except Exception as e:
-            print("Ошибка при загрузке данных в векторную БД:", e)
+            print("Ошибка при загрузке данных в CHROMADB:", e)
 
 
 def get_chroma_client():
@@ -214,13 +144,13 @@ def get_chroma_client():
             chroma_server_host='localhost',
             chroma_server_http_port='8000')
         )
-        print("Подключение к векторной БД: SUCCESS")
+        print("Подключение к CHROMADB: SUCCESS")
         return chroma_client
     except Exception as e:
-        print("Ошибка при подключении к векторной БД:", e)
+        print("Ошибка при подключении к CHROMADB:", e)
         return None
 
-def vectorstore_query(collection, collection_type, question, n_results):
+def vectorstore_query(collection, source_file_type, question, n_results):
     """
     This function is used to query the vector store.
     It is used to query the vector store to get the response to a question.
@@ -229,7 +159,7 @@ def vectorstore_query(collection, collection_type, question, n_results):
     question: str - the question to query in the vector store
     n_results: int - the number of results to return
     """
-    if collection_type == 'document':
+    if source_file_type == 'table':
         response = collection.query(
             query_texts=question,
             n_results=n_results
@@ -253,10 +183,10 @@ def vectorstore_query(collection, collection_type, question, n_results):
         
         return vector_db_response
     
-    elif collection_type == 'text':
+    elif source_file_type == 'text':
         response = collection.query(
         # query_embeddings=embedding_function(question),
-        query_texts=[question],
+        query_texts=question,
         n_results=n_results,
         # include=["documents"],
         # where={"metadata_field":"is_equal_to_this"}, # где искать

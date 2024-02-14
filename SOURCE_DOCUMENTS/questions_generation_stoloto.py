@@ -609,6 +609,23 @@ for q in questions:
         "url": False}
     documents.append(temp_dict)
 
+reply = """Тиражи быстрой лотереи Забава от Русского лото проходят каждые 15 минут часа"""
+reply = reply.replace("\n", "")
+questions = [
+    "Когда ближайший розыгрыш забавы",
+    "когда тираж забавы",
+    "когда можно выигрывать в забаву",
+    "как скоро будет тираж забавы"
+]
+
+for q in questions:
+    temp_dict = {
+        "id": str(next(it)),
+        "question": q,
+        "answer": reply,
+        "url": False}
+    documents.append(temp_dict)
+
 
 # создаем из наших документов датафрейм
 df = pd.DataFrame(documents)

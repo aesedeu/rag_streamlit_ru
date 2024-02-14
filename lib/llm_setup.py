@@ -17,7 +17,7 @@ def create_input_message(question, tokenizer, collection):
 
     vector_db_response = vectorstore_query(
         collection=collection,
-        collection_type='document',
+        source_file_type='table',
         question=question,
         n_results=5
     )
@@ -27,7 +27,7 @@ def create_input_message(question, tokenizer, collection):
     QUESTION = question
     chat = [
         {"role": "system", "content": f"{SYSTEM_PROMPT}"},
-        {"role": "user", "content": f"Мой вопрос: {QUESTION}"},
+        {"role": "user", "content": f"{QUESTION}"},
         {"role": "assistant", "content":"Ответ на вопрос: "}
     ]
 
