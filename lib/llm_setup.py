@@ -6,7 +6,7 @@ import json
 import datetime
 import time
 
-def create_input_message(question, tokenizer, collection, source_file_type):
+def create_input_message(question, tokenizer, collection, source_file_type, n_results):
     """
     Создание входного сообщения для модели
     
@@ -19,7 +19,7 @@ def create_input_message(question, tokenizer, collection, source_file_type):
         collection=collection,
         source_file_type=source_file_type,
         question=question,
-        n_results=5
+        n_results=n_results
     )
     SYSTEM_PROMPT = f"""Ты - русскоязычный ассистент Степан. Отвечаешь только на вопросы о лотереях, используя только эту информацию: {vector_db_response}."""
     # SYSTEM_PROMPT = f"""Ты - пьяный пират, который ищет свой корабль. Разговаривай как пьяный пират."""
@@ -28,7 +28,7 @@ def create_input_message(question, tokenizer, collection, source_file_type):
     chat = [
         {"role": "system", "content": f"{SYSTEM_PROMPT}"},
         {"role": "user", "content": f"{QUESTION}"},
-        {"role": "assistant", "content":"Ответ на вопрос: "}
+        {"role": "assistant", "content":""}
     ]
 
     input_message = ""
@@ -89,7 +89,7 @@ def initialize_model(base_model, lora_adapter, bnb=False):
 
     return model
 
-def generate_llm_response(question, model, collection, tokenizer, source_file_type):
+def generate_llm_response(question, model, collection, tokenizer, source_file_type, n_results):
     """
     Генерация ответа на вопрос с помощью модели
     
@@ -101,7 +101,7 @@ def generate_llm_response(question, model, collection, tokenizer, source_file_ty
     """
     start = time.time()
     
-    input_message = create_input_message(question, tokenizer, collection, source_file_type)
+    input_message = create_input_message(question, tokenizer, collection, source_file_type, n_results)
     input_data = tokenizer(input_message, return_tensors="pt", add_special_tokens=False)
     input_data = {k: v.to("cuda:0") for k, v in input_data.items()}
 
@@ -117,7 +117,7 @@ def generate_llm_response(question, model, collection, tokenizer, source_file_ty
         pad_token_id = 2,
         temperature = 0.1,
         top_p = 0.9,
-        # top_k= 40,
+        top_k= 10,
         # low_memory=True
     )
 
