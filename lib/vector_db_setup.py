@@ -147,6 +147,9 @@ def get_chroma_client():
             chroma_server_http_port='8000')
         )
         print("Подключение к CHROMADB: SUCCESS")
+        print("Доступны следующие коллекции:")
+        for i in chroma_client.list_collections():
+            print(f"- {i.name}")
         return chroma_client
     except Exception as e:
         print("Ошибка при подключении к CHROMADB:", e)
