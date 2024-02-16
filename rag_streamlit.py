@@ -2,7 +2,7 @@ import streamlit as st
 # from lib.llm_api_response import get_llm_api_response
 # from lib.postgres_setup import upload_to_postgres
 from lib.vector_db_setup import get_texts, upload_to_vectorstore, vectorstore_query, get_chroma_client
-from lib.llm_setup import initialize_model, generate_llm_response
+from lib.llm_setup import initialize_lora_model, generate_llm_response
 from peft import PeftConfig
 from transformers import AutoTokenizer
 
@@ -49,7 +49,7 @@ def connection_initialize_model():
     lora_adapter = "IlyaGusev/saiga2_13b_lora"
     config = PeftConfig.from_pretrained(lora_adapter)
     base_model = config.base_model_name_or_path
-    model = initialize_model(
+    model = initialize_lora_model(
         base_model=base_model,
         lora_adapter=lora_adapter,
         # bnb=False
@@ -57,7 +57,7 @@ def connection_initialize_model():
     return model
 
 tokenizer = connection_tokenizer()
-collection = connection_get_chroma_client().get_collection('book-txt') # !!!!!!!!! УКАЗАТЬ ИЗ КАКОЙ КОЛЛЕКЦИИ !!!!!!!!!!
+collection = connection_get_chroma_client().get_collection('book') # !!!!!!!!! УКАЗАТЬ ИЗ КАКОЙ КОЛЛЕКЦИИ !!!!!!!!!!
 model = connection_initialize_model()
 
 
@@ -89,7 +89,7 @@ if prompt:
                 model=model,
                 collection=collection,
                 tokenizer=tokenizer,
-                source_file_type='text', # !!!!!!!!! УКАЗАТЬ ТИП ИСХОДНОГО ФАЙЛА КОЛЛЕКЦИИ !!!!!!!!!!
+                source_file_type='table', # !!!!!!!!! УКАЗАТЬ ТИП ИСХОДНОГО ФАЙЛА КОЛЛЕКЦИИ !!!!!!!!!!
                 n_results=5,
             )
             

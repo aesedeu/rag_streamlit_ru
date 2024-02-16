@@ -6,14 +6,47 @@ import json
 import datetime
 import time
 
-def create_input_message(question, tokenizer, collection, source_file_type, n_results):
+def create_input_message(
+        question:str,
+        tokenizer: AutoTokenizer
+    ):
     """
-    Создание входного сообщения для модели
+    Создание входного сообщения для модели.
     
     Args:
     question: str - вопрос пользователя
     tokenizer: AutoTokenizer - токенизатор
-    collection: str - название коллекции векторов"""
+    """
+
+    SYSTEM_PROMPT = f"""Ты - русскоязычный ассистент Степан. Отвечаешь на вопросы людей и помогаешь им."""
+    # SYSTEM_PROMPT = f"""Ты - пьяный пират, который ищет свой корабль. Разговаривай как пьяный пират."""
+
+    QUESTION = question
+    chat = [
+        {"role": "system", "content": f"{SYSTEM_PROMPT}"},
+        {"role": "user", "content": f"{QUESTION}"},
+        {"role": "assistant", "content":""}
+    ]
+
+    input_message = ""
+    for i in chat:
+        input_message += tokenizer.bos_token + i['role'] + '\n' + i['content'] + tokenizer.eos_token + '\n'
+    input_message = input_message[:-5].strip() + "\n"
+
+    return input_message
+
+
+def create_input_rag_message(question, tokenizer, collection, source_file_type, n_results):
+    """
+    Создание входного сообщения для модели с использованием векторной БД chromadb.
+    
+    Args:
+    question: str - вопрос пользователя
+    tokenizer: AutoTokenizer - токенизатор
+    collection: str - название коллекции векторов
+    source_file_type: str - тип исходного файла по которому создавалась коллекция
+    n_results: int - количество результатов из векторного поиска
+    """
 
     vector_db_response = vectorstore_query(
         collection=collection,
@@ -38,7 +71,11 @@ def create_input_message(question, tokenizer, collection, source_file_type, n_re
 
     return input_message
 
-def initialize_model(base_model, lora_adapter, bnb=False):
+def initialize_lora_model(
+        base_model:str,
+        lora_adapter:str,
+        bnb:bool=False
+    ):
     """
     Инициализация модели
     
@@ -89,7 +126,14 @@ def initialize_model(base_model, lora_adapter, bnb=False):
 
     return model
 
-def generate_llm_response(question, model, collection, tokenizer, source_file_type, n_results):
+def generate_llm_response(
+        question:str,
+        model,
+        tokenizer,
+        collection=None,
+        source_file_type:str=None,
+        n_results:int=None
+    ):
     """
     Генерация ответа на вопрос с помощью модели
     
@@ -98,10 +142,15 @@ def generate_llm_response(question, model, collection, tokenizer, source_file_ty
     model: PeftModel - модель
     collection: str - название коллекции векторов
     tokenizer: AutoTokenizer - токенизатор
+    source_file_type: str - 'book' или 'text'
     """
     start = time.time()
     
-    input_message = create_input_message(question, tokenizer, collection, source_file_type, n_results)
+    if collection==None and source_file_type==None and n_results==None:
+        input_message = create_input_message(question, tokenizer)
+    else:
+        input_message = create_input_rag_message(question, tokenizer, collection, source_file_type, n_results)
+
     input_data = tokenizer(input_message, return_tensors="pt", add_special_tokens=False)
     input_data = {k: v.to("cuda:0") for k, v in input_data.items()}
 
@@ -140,7 +189,7 @@ def generate_llm_response(question, model, collection, tokenizer, source_file_ty
     except FileNotFoundError:
         existing_data = {}  # Используем пустой словарь
 
-    # Формирую новую запись в джейсонее
+    # Формирую новую запись в джейсоне
     timestamp = datetime.datetime.now().timestamp()
     existing_data[str(timestamp)] = {
         "date": datetime.datetime.now().strftime("%Y-%m-%d"),

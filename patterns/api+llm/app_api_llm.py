@@ -17,7 +17,7 @@ import chromadb
 from chromadb.config import Settings
 from peft import PeftConfig
 from transformers import AutoTokenizer
-from lib.llm_setup import initialize_model, generate_llm_response
+from lib.llm_setup import initialize_lora_model, generate_llm_response
 from lib.postgres_setup import upload_to_postgres
 
 import warnings
@@ -47,7 +47,7 @@ tokenizer.pad_token = tokenizer.eos_token
 tokenizer.padding_side = 'right' # ???
 
 try:
-    model = initialize_model(
+    model = initialize_lora_model(
         base_model=base_model,
         lora_adapter=lora_adapter,
         # bnb=True
@@ -84,7 +84,9 @@ async def add_numbers(
         question=income_message.question_string,
         model=model,
         collection=collection,
-        tokenizer=tokenizer
+        tokenizer=tokenizer,
+        source_file_type='table',
+        n_results=5
     )
 
     end = time.time()
