@@ -1,7 +1,6 @@
 import streamlit as st
 # from lib.llm_api_response import get_llm_api_response
 # from lib.postgres_setup import upload_to_postgres
-from lib.vector_db_setup import get_texts, upload_to_vectorstore, vectorstore_query, get_chroma_client
 from lib.llm_setup import initialize_lora_model, generate_llm_response
 from peft import PeftConfig
 from transformers import AutoTokenizer
@@ -39,11 +38,6 @@ def connection_tokenizer():
     return tokenizer
 
 @st.cache_resource
-def connection_get_chroma_client():
-    chroma_client = get_chroma_client()
-    return chroma_client
-
-@st.cache_resource
 def connection_initialize_model():
     # lora_adapter="IlyaGusev/saiga_mistral_7b"
     # lora_adapter = "IlyaGusev/saiga2_13b_lora"
@@ -58,7 +52,6 @@ def connection_initialize_model():
     return model
 
 tokenizer = connection_tokenizer()
-collection = connection_get_chroma_client().get_collection('book-txt') # !!!!!!!!! УКАЗАТЬ ИЗ КАКОЙ КОЛЛЕКЦИИ !!!!!!!!!!
 model = connection_initialize_model()
 
 
@@ -87,7 +80,8 @@ if prompt:
         with st.spinner('Собираю информацию по Вашему вопросу...⏳'):
             response = generate_llm_response(
                 question=prompt,
-                model=model
+                model=model,
+                tokenizer=tokenizer
             )
             
             # Добавляем ответ в postgres
