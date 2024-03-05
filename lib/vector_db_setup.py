@@ -13,8 +13,8 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 def get_texts(
         file_name,
         content_column=None,
-        chunk_size=300,
-        chunk_overlap=300
+        chunk_size=500,
+        chunk_overlap=200
     ):
 
     """
@@ -22,7 +22,7 @@ def get_texts(
     It is used to load the dataset and split the documents into smaller chunks.
     
     chunk_size: int, default=500 - the size of the chunks to split the documents into
-    chunk_overlap: int, default=500 - the overlap between the chunks
+    chunk_overlap: int, default=200 - the overlap between the chunks
     """
     dataset_path = "./SOURCE_DOCUMENTS/" + file_name
 

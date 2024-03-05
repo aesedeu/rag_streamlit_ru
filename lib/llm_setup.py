@@ -54,7 +54,7 @@ def create_input_rag_message(question, tokenizer, collection, source_file_type, 
         question=question,
         n_results=n_results
     )
-    SYSTEM_PROMPT = f"""Ты - русскоязычный ассистент Степан. Отвечаешь только на вопросы о лотереях, используя только эту информацию: {vector_db_response}."""
+    SYSTEM_PROMPT = f"""Ты - русскоязычный ассистент Степан. Отвечаешь на вопросы пользователя, используя только эту информацию: {vector_db_response}."""
     # SYSTEM_PROMPT = f"""Ты - пьяный пират, который ищет свой корабль. Разговаривай как пьяный пират."""
 
     QUESTION = question
@@ -181,7 +181,7 @@ def generate_llm_response(
     end = time.time()
     time_spent = round((end-start), 2)
 
-    filename = "dialogs/q_a.json"
+    filename = "./dialogs/q_a.json"
     # Читаем существующие данные в моем джейсоне
     try:
         with open(filename, "r") as file:

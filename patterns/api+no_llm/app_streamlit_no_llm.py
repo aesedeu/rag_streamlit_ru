@@ -4,7 +4,7 @@ import streamlit as st
 import time
 
 
-st.markdown("<h1 style='text-align: center; color: orange;'>Тестовый чат-бот проекта Столото </h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: orange;'>Тестовый чат-бот</h1>", unsafe_allow_html=True)
 st.markdown("<h6 style='text-align: right; color: grey;'>Built by <a href='https://synchro.pro/'>Synchro</a></h6>", unsafe_allow_html=True)
 
 st.markdown("<div style='text-align: left; color:red;'>Версия: v0.1 </div>", unsafe_allow_html=True)
@@ -24,7 +24,6 @@ def foo():
 @st.cache_resource
 def test_data():
     x = foo()
-    print('TEST_TEST_TEST')
     time.sleep(2)
     result = 10*3 + x
     return result
@@ -64,7 +63,7 @@ if prompt:
     st.session_state.messages.append({"role": "assistant", "content": response, "avatar": "./icons/assistant_icon.jpg"})
     
 else:
-    response = f"Здравствуйте, меня зовут Степан. Я - искусственный интеллект, созданный для помощи Вам по вопросам, связанными со Столото. Какой у Вас вопрос?"
+    response = f"Здравствуйте, меня зовут Степан. Я - искусственный интеллект. Какой у Вас вопрос?"
     with st.chat_message(name="assistant", avatar="./icons/assistant_icon.jpg"):
         st.markdown(response)
     st.session_state.messages.append({"role": "assistant", "content": response, "avatar": "./icons/assistant_icon.jpg"})
