@@ -2,19 +2,26 @@ from lib.vector_db_setup import get_texts, upload_to_vectorstore
 import warnings
 warnings.simplefilter("ignore", UserWarning)
 import warnings
+import click
 
-def main():
-    file_name = input(f"Введите путь к файлу в директории SOURCE_DOCUMENTS: ")
+# @click.command()
+# @click.option("-dp", "--data_path", help='Path to your data which will be uploaded to the verctorstore. CSV/TXT formats are supported')
+# @click.option("-cn", "--collection_name", help='Collection name in vectorstore')
+def main(
+    # data_path:str,
+    # collection_name:str,
+    ):
+    data_path = input(f"Введите путь к файлу в директории SOURCE_DOCUMENTS: ")
     collection_name = input(f"Введите название коллекции: ")
 
-    if file_name.endswith('.csv'):
+    if data_path.endswith('.csv'):
         texts = get_texts(
-            file_name=file_name,
+            file_name=data_path,
             content_column='question'
         )
-    elif file_name.endswith('.txt'):
+    elif data_path.endswith('.txt'):
         texts = get_texts(
-            file_name=file_name,
+            file_name=data_path,
             chunk_size=150,
             chunk_overlap=150
         )

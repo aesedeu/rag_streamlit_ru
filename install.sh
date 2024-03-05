@@ -1,4 +1,5 @@
 mkdir SOURCE_DOCUMENTS
+
 echo "========================================="
 echo "Creating vectorstore ChromaDB..."
 echo "========================================="
