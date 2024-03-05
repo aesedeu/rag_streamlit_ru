@@ -6,6 +6,25 @@ from chromadb.utils import embedding_functions
 from langchain_community.document_loaders import DataFrameLoader, TextLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter 
 
+import os
+import datetime as dt
+import logging
+from dotenv import load_dotenv
+load_dotenv()
+PROJECT_DIRECTORY = os.getenv('PROJECT_DIRECTORY')
+
+logging.basicConfig(
+    # filename='lll.log',
+    # filemode='a',
+    format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+    handlers=[
+        logging.FileHandler(f"{PROJECT_DIRECTORY}/logs/{dt.datetime.now().strftime('%Y_%m_%d')}.log"),
+        logging.StreamHandler()
+    ],
+    level=logging.INFO
+)
+
 
 
 
@@ -27,7 +46,7 @@ def get_texts(
     dataset_path = "./SOURCE_DOCUMENTS/" + file_name
 
     if dataset_path.endswith('.csv'):
-        print(f'Выбраны данные из файла: {dataset_path}')
+        logging.info(f'Выбраны данные из файла: {dataset_path}')
         try:
             df = pd.read_csv(dataset_path, dtype='object')
             loader = DataFrameLoader(df, page_content_column=content_column)
@@ -39,12 +58,12 @@ def get_texts(
                                                     )
             texts = rec_text_splitter.split_documents(documents)
         except Exception as e:
-            print(e)
+            logging.info(e)
         else:
-            print('Загрузка датасета: SUCCESS')
+            logging.info('Загрузка датасета: SUCCESS')
         return texts
     elif dataset_path.endswith('.txt'):
-        print(f'Выбраны данные из файла: {dataset_path}')
+        logging.info(f'Выбраны данные из файла: {dataset_path}')
         try:
             loader = TextLoader(dataset_path)
             documents = loader.load()
@@ -58,11 +77,11 @@ def get_texts(
             #                                                 length_function=len
             #                                                 )
             # texts = rec_text_splitter.split_text(text)
-            # print(f'Total number of chunks: {len(texts)}\n')
+            # logging.info(f'Total number of chunks: {len(texts)}\n')
         except Exception as e:
-            print(e)
+            logging.info(e)
         else:
-            print('Загрузка датасета: SUCCESS')            
+            logging.info('Загрузка датасета: SUCCESS')            
         return texts
 
         
@@ -82,9 +101,9 @@ def upload_to_vectorstore(texts, collection_name):
     flag = True
     try:
         embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="sentence-transformers/all-MiniLM-L6-v2")
-        print("Загрузка модели для эмбеддингов: SUCCESS")
+        logging.info("Загрузка модели для эмбеддингов: SUCCESS")
     except Exception as e:
-        print("Ошибка при загрузке модели эмбеддингов:", e)
+        logging.info("Ошибка при загрузке модели эмбеддингов:", e)
         flag = False
         
     if flag:
@@ -95,24 +114,24 @@ def upload_to_vectorstore(texts, collection_name):
                 chroma_server_host='localhost',
                 chroma_server_http_port='8000')
             )
-            print("Подключение к CHROMADB: SUCCESS")
+            logging.info("Подключение к CHROMADB: SUCCESS")
         except Exception as e:
-            print("Ошибка при подключении к CHROMADB:", e)
+            logging.info("Ошибка при подключении к CHROMADB:", e)
             flag = False
     
     if flag:
         for i in chroma_client.list_collections():
             if i.name == collection_name:
                 chroma_client.delete_collection(collection_name)
-                print(f'Была обнаружена и удалена существующая коллекция с именем "{collection_name}"')
+                logging.info(f'Была обнаружена и удалена существующая коллекция с именем "{collection_name}"')
         try:
             collection = chroma_client.get_or_create_collection(name=collection_name,
                                             metadata={"hnsw:space": "cosine"},
                                             embedding_function=embedding_function
                                             )
-            print(f"Создание коллекции {collection_name}: SUCCESS")
+            logging.info(f"Создание коллекции {collection_name}: SUCCESS")
         except Exception as e:
-            print("Ошибка при создании коллекции:", e)
+            logging.info("Ошибка при создании коллекции:", e)
             flag = False
     
     if flag:
@@ -121,16 +140,16 @@ def upload_to_vectorstore(texts, collection_name):
             for doc in texts:
                 counter += 1
                 if counter % 100 == 0:
-                    print(f"uploaded {counter} of {len(texts)}")
+                    logging.info(f"uploaded {counter} of {len(texts)}")
                 collection.add(
                     documents=doc.page_content,
                     metadatas=doc.metadata,
                     ids=['id'+str(counter)]
                     # ids=doc.metadata['id']
                 )
-            print("Загрузка данных в CHROMADB: SUCCESS")
+            logging.info("Загрузка данных в CHROMADB: SUCCESS")
         except Exception as e:
-            print("Ошибка при загрузке данных в CHROMADB:", e)
+            logging.info("Ошибка при загрузке данных в CHROMADB:", e)
 
 
 def get_chroma_client():
@@ -146,13 +165,13 @@ def get_chroma_client():
             chroma_server_host='localhost',
             chroma_server_http_port='8000')
         )
-        print("Подключение к CHROMADB: SUCCESS")
-        print("Доступны следующие коллекции:")
+        logging.info("Подключение к CHROMADB: SUCCESS")
+        logging.info("Доступны следующие коллекции:")
         for i in chroma_client.list_collections():
-            print(f"- {i.name}")
+            logging.info(f"- {i.name}")
         return chroma_client
     except Exception as e:
-        print("Ошибка при подключении к CHROMADB:", e)
+        logging.info("Ошибка при подключении к CHROMADB:", e)
         return None
 
 def vectorstore_query(collection, source_file_type, question, n_results):
