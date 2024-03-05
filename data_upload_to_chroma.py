@@ -4,15 +4,16 @@ warnings.simplefilter("ignore", UserWarning)
 import warnings
 import click
 
-# @click.command()
-# @click.option("-dp", "--data_path", help='Path to your data which will be uploaded to the verctorstore. CSV/TXT formats are supported')
-# @click.option("-cn", "--collection_name", help='Collection name in vectorstore')
+@click.command()
+@click.option("-dp", "--data_path", help='Path to your data which will be uploaded to the verctorstore. CSV/TXT formats are supported')
+@click.option("-cn", "--collection_name", help='Collection name in vectorstore')
 def main(
-    # data_path:str,
-    # collection_name:str,
+    data_path:str,
+    collection_name:str,
     ):
-    data_path = input(f"Введите путь к файлу в директории SOURCE_DOCUMENTS: ")
-    collection_name = input(f"Введите название коллекции: ")
+    assert data_path is not None and collection_name is not None, "Please provide correct 'data_path' and 'collection_name' or type --help for FAQ"
+    # data_path = input(f"Введите путь к файлу в директории SOURCE_DOCUMENTS: ")
+    # collection_name = input(f"Введите название коллекции: ")
 
     if data_path.endswith('.csv'):
         texts = get_texts(
