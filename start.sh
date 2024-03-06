@@ -1,19 +1,21 @@
 . .env
+mkdir $SOURCE_DOCUMENTS_FOLDER
+mkdir logs
+echo PROJECT_DIRECTORY=$PWD >> .env
+
+echo "========================================="
+echo "Creating vectorstore ChromaDB..."
+echo "========================================="
+docker-compose up -d
+
+echo "========================================="
+echo "Installing virtual environment with dependencies..."
+echo "========================================="
+python3.10 -m venv .venv
+echo "$(pwd)" > .venv/lib/python3.10/site-packages/my_project.pth 
 . .venv/bin/activate
+pip install -r requirements.txt
+python --version
 
-printf 'Do you want to upload data to vectorstore (y/n)? '
-read answer
-if [ "$answer" != "${answer#[Yy]}" ] ;then
-    echo "Uploading data from '$DATA_PATH' to '$COLLECTION_NAME' collection..."
-    python data_upload_to_chroma.py --data_path=$DATA_PATH --collection_name=$COLLECTION_NAME
-fi
-
-printf 'Do you want to run test app without LLM (y/n)? '
-read answer
-if [ "$answer" != "${answer#[Yy]}" ] ;then
-    echo "Running app in test mode..."
-    sleep 1
-    streamlit run patterns/api+no_llm/app_streamlit_no_llm.py
-else
-    echo "done"
-fi
+# Running main app
+sh app.sh
