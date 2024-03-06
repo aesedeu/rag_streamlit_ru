@@ -142,7 +142,7 @@ def generate_llm_response(
     model: PeftModel - модель
     collection: str - название коллекции векторов
     tokenizer: AutoTokenizer - токенизатор
-    source_file_type: str - 'book' или 'text'
+    source_file_type: str - 'csv' или 'txt'
     """
     start = time.time()
     

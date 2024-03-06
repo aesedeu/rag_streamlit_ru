@@ -89,7 +89,7 @@ if prompt:
                 model=model,
                 collection=collection,
                 tokenizer=tokenizer,
-                source_file_type='table', # !!!!!!!!! УКАЗАТЬ ТИП ИСХОДНОГО ФАЙЛА КОЛЛЕКЦИИ !!!!!!!!!!
+                source_file_type='csv', # !!!!!!!!! УКАЗАТЬ ТИП ИСХОДНОГО ФАЙЛА КОЛЛЕКЦИИ !!!!!!!!!!
                 n_results=5,
             )
             

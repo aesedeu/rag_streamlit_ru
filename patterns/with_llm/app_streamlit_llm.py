@@ -56,7 +56,7 @@ if prompt:
         with st.spinner('Собираю информацию по Вашему вопросу...⏳'):
             api_response = get_llm_api_response(
                 question=prompt,
-                api_key="131e12aa46252f4da6920dd2feccc94978688eab3a96337ba4b67a945eac1308",
+                api_key="e85e4da3ce864195c2fbdc2e730784f1dc805c99942ebac8e754314c9f412ffa",
                 user_id=906
             )
             response = api_response['ai_response'] + f"\nВремя генерации ответа: {api_response['response_time']} сек"

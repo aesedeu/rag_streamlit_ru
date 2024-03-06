@@ -180,10 +180,11 @@ def vectorstore_query(collection, source_file_type, question, n_results):
     It is used to query the vector store to get the response to a question.
     
     collection: collection - the collection to query in the vector store
+    source_file_type: str - type of file which was used for collection creating
     question: str - the question to query in the vector store
     n_results: int - the number of results to return
     """
-    if source_file_type == 'table':
+    if source_file_type == 'csv':
         response = collection.query(
             query_texts=question,
             n_results=n_results
@@ -199,7 +200,7 @@ def vectorstore_query(collection, source_file_type, question, n_results):
         vector_db_response = " ".join(response_list)
         
     
-    elif source_file_type == 'text':
+    elif source_file_type == 'txt':
         response = collection.query(
             query_texts=question,
             n_results=n_results,

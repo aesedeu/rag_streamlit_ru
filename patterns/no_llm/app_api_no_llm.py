@@ -44,7 +44,6 @@ async def add_numbers(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid API Key")
 
     start = time.time()
-    start_time = dt.datetime.now().strftime("%H:%M:%S")
     client_host = request.client.host
     
     # ГЕНЕРАЦИЯ ОТВЕТА ПОЛЬЗОВАТЕЛЮ
@@ -56,8 +55,7 @@ async def add_numbers(
     time_spent
     result = {
         "user_id": income_message.user_id,
-        "date": dt.datetime.now().strftime("%Y-%m-%d"),
-        "time": start_time,
+        "datetime": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "client_ip": client_host,
         "user_question": income_message.question_string,
         "ai_response": ai_response,
@@ -75,5 +73,5 @@ if __name__ == "__main__":
                 host="0.0.0.0",
                 port=8008,
                 # log_level="debug", # info
-                workers=4
+                workers=2
                 )
