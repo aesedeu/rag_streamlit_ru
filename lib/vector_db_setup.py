@@ -28,61 +28,6 @@ logging.basicConfig(
 )
 
 
-
-
-
-# def get_texts(
-#         file_name,
-#         content_column=None,
-#         chunk_size=300,
-#         chunk_overlap=100
-#     ):
-
-#     """
-#     This function is used to prepare the data for the vector store.
-#     It is used to load the dataset and split the documents into smaller chunks.
-    
-#     chunk_size: int, default=500 - the size of the chunks to split the documents into
-#     chunk_overlap: int, default=200 - the overlap between the chunks
-#     """
-#     dataset_path = "./SOURCE_DOCUMENTS/" + file_name
-
-#     if dataset_path.endswith('.csv'):
-#         logging.info(f'Выбраны данные из файла: {dataset_path}')
-#         try:
-#             df = pd.read_csv(dataset_path, dtype='object')
-#             loader = DataFrameLoader(df, page_content_column=content_column)
-#             documents = loader.load()
-
-#             rec_text_splitter = RecursiveCharacterTextSplitter(
-#                 chunk_size=chunk_size,
-#                 chunk_overlap=chunk_overlap,
-#                 length_function=len
-#             )
-#             texts = rec_text_splitter.split_documents(documents)
-#         except Exception as e:
-#             logging.info(e)
-#         else:
-#             logging.info('Загрузка датасета: SUCCESS')
-#         return texts
-#     elif dataset_path.endswith('.txt'):
-#         logging.info(f'Выбраны данные из файла: {dataset_path}')
-#         try:
-#             loader = TextLoader(dataset_path)
-#             documents = loader.load()
-#             text_splitter = RecursiveCharacterTextSplitter(
-#                 chunk_size=chunk_size,
-#                 chunk_overlap=chunk_overlap,
-#                 length_function=len
-#             )
-#             texts = text_splitter.split_documents(documents)
-
-#         except Exception as e:
-#             logging.info(e)
-#         else:
-#             logging.info('Загрузка датасета: SUCCESS')            
-#         return texts
-
 def get_texts(
         file_name:str,
         collection_name:str,
@@ -255,15 +200,3 @@ def vectorstore_query(collection, source_file_type, question, n_results):
             vector_db_response += doc.capitalize() + ". "
 
     return vector_db_response
-
-
-
-
-# def main():
-#     texts = data_preparation()
-#     collection = vector_store_upload(texts, collection_name='book')
-
-
-
-# if __name__ == "__main__":
-#     main()
