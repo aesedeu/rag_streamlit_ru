@@ -1,4 +1,4 @@
-from lib.vector_db_setup import get_texts, upload_to_vectorstore
+from lib.vector_db_setup import get_texts
 import warnings
 warnings.simplefilter("ignore", UserWarning)
 import warnings
@@ -34,22 +34,15 @@ def main(
     # data_path = input(f"Введите путь к файлу в директории SOURCE_DOCUMENTS: ")
     # collection_name = input(f"Введите название коллекции: ")
 
-    if data_path.endswith('.csv'):
-        texts = get_texts(
+    texts = get_texts(
             file_name=data_path,
-            content_column='question'
-        )
-    elif data_path.endswith('.txt'):
-        texts = get_texts(
-            file_name=data_path,
-            chunk_size=150,
-            chunk_overlap=150
+            collection_name=collection_name
         )
 
-    upload_to_vectorstore(
-        texts,
-        collection_name=collection_name
-    )
+    # upload_to_vectorstore(
+    #     texts,
+    #     collection_name=collection_name
+    # )
     
 if __name__ == "__main__":
     main()
