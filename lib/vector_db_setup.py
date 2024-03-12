@@ -4,7 +4,8 @@ import chromadb
 from chromadb.config import Settings
 from chromadb.utils import embedding_functions
 from langchain_community.document_loaders import DataFrameLoader, TextLoader, PDFMinerLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter 
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from transformers import AutoTokenizer
 import string
 
 import os
@@ -31,8 +32,8 @@ logging.basicConfig(
 def get_texts(
         file_name:str,
         collection_name:str,
-        chunk_size=300,
-        chunk_overlap=100        
+        chunk_size=100,
+        chunk_overlap=10
     ):
 
     """
@@ -44,25 +45,31 @@ def get_texts(
     chunk_overlap: int, default=200 - the overlap between the chunks
     """
     dataset_path = SOURCE_DOCUMENTS_FOLDER + "/" + file_name
+    logging.info(f'Выбраны данные из файла: {dataset_path}')
 
     if dataset_path.endswith('.csv'):
-        logging.info(f'Выбраны данные из файла: {dataset_path}')
         df = pd.read_csv(dataset_path, dtype='object')
         loader = DataFrameLoader(df, page_content_column="question")
     elif dataset_path.endswith('.txt'):
-        logging.info(f'Выбраны данные из файла: {dataset_path}')
         loader = TextLoader(dataset_path)
     elif dataset_path.endswith('.pdf'):
-        logging.info(f'Выбраны данные из файла: {dataset_path}')
         loader = PDFMinerLoader(dataset_path)
     
     documents = loader.load()  
-    documents = loader.load()
+
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=chunk_size,
-        chunk_overlap=chunk_overlap,
+        chunk_size=250,
+        chunk_overlap=50,
         length_function=len
     )
+
+    # text_splitter = RecursiveCharacterTextSplitter.from_huggingface_tokenizer(
+    #     AutoTokenizer.from_pretrained("Open-Orca/Mistral-7B-OpenOrca"),
+    #     chunk_size=chunk_size,
+    #     chunk_overlap=chunk_overlap,
+    #     separators=["\n\n", "\n", " ", ""]
+    # )
+
     texts = text_splitter.split_documents(documents)
 
 
@@ -78,7 +85,8 @@ def get_texts(
 
         flag = True
         try:
-            embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="sentence-transformers/all-MiniLM-L6-v2")
+            # embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="sentence-transformers/all-MiniLM-L6-v2")
+            embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
             logging.info("Загрузка модели для эмбеддингов: SUCCESS")
         except Exception as e:
             logging.info("Ошибка при загрузке модели эмбеддингов:", e)
@@ -90,7 +98,8 @@ def get_texts(
                     allow_reset=True,
                     chroma_api_impl='chromadb.api.fastapi.FastAPI',
                     chroma_server_host='localhost',
-                    chroma_server_http_port='8000')
+                    chroma_server_http_port='8000',
+                    anonymized_telemetry=False)
                 )
                 logging.info("Подключение к CHROMADB: SUCCESS")
             except Exception as e:
@@ -104,7 +113,7 @@ def get_texts(
                     logging.info(f'Была обнаружена и удалена существующая коллекция с именем "{collection_name}"')
             try:
                 collection = chroma_client.get_or_create_collection(name=collection_name,
-                                                metadata={"hnsw:space": "l2"},
+                                                metadata={"hnsw:space": "cosine"},
                                                 embedding_function=embedding_function
                                                 )
                 logging.info(f"Создание коллекции {collection_name}: SUCCESS")
@@ -169,12 +178,13 @@ def vectorstore_query(collection, source_file_type, question, n_results):
     question: str - the question to query in the vector store
     n_results: int - the number of results to return
     """
-    if source_file_type.lower() == 'csv':
-        response = collection.query(
+
+    response = collection.query(
             query_texts=question,
             n_results=n_results
         )
-
+    
+    if source_file_type.lower() == 'csv':
         # убираем одинаковые ответы
         response_list = []
         for repl in response['metadatas'][0]:
@@ -184,14 +194,10 @@ def vectorstore_query(collection, source_file_type, question, n_results):
         # собираем итоговый ответ
         vector_db_response = " ".join(response_list)
         
+    elif source_file_type.lower() in ['txt']:
+        vector_db_response = " ".join(response["documents"][0])
     
-    elif source_file_type.lower() in ['txt', 'pdf']:
-        response = collection.query(
-            query_texts=question,
-            n_results=n_results
-        )
-        # vector_db_response = " ".join(response["documents"][0])
-
+    elif source_file_type.lower() in ['pdf']:
         vector_db_response = ''
         for doc in response['documents'][0]:
             for i in doc:
