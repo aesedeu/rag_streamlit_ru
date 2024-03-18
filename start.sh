@@ -1,3 +1,4 @@
+touch .env
 . .env
 echo PROJECT_DIRECTORY=$PWD >> .env
 echo SOURCE_DOCUMENTS_FOLDER=SOURCE_DOCUMENTS >> .env
