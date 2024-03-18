@@ -57,7 +57,7 @@ def connection_initialize_model():
     return model
 
 tokenizer = connection_tokenizer()
-collection = connection_get_chroma_client().get_collection('book') # !!!!!!!!! УКАЗАТЬ ИЗ КАКОЙ КОЛЛЕКЦИИ !!!!!!!!!!
+collection = connection_get_chroma_client().get_collection('example') # !!!!!!!!! УКАЗАТЬ ИЗ КАКОЙ КОЛЛЕКЦИИ !!!!!!!!!!
 model = connection_initialize_model()
 
 
@@ -75,21 +75,21 @@ for message in st.session_state.messages:
             st.markdown(message["content"])
 
 # Получаем сообщение от пользователя
-prompt = st.chat_input("Введите ваше сообщение")
-if prompt:    
+question = st.chat_input("Введите ваше сообщение")
+if question:    
     with st.chat_message(name="user"):
-        st.markdown(prompt)
-    st.session_state.messages.append({"role": "user", "content": prompt})
+        st.markdown(question)
+    st.session_state.messages.append({"role": "user", "content": question})
 
     # Отвечаем пользователю
     with st.chat_message(name="assistant", avatar="./icons/assistant_icon.jpg"):
         with st.spinner('Собираю информацию по Вашему вопросу...⏳'):
             response = generate_llm_response(
-                question=prompt,
+                question=question,
                 model=model,
                 collection=collection,
                 tokenizer=tokenizer,
-                source_file_type='csv', # !!!!!!!!! УКАЗАТЬ ТИП ИСХОДНОГО ФАЙЛА КОЛЛЕКЦИИ !!!!!!!!!!
+                source_file_type='txt', # !!!!!!!!! УКАЗАТЬ ТИП ИСХОДНОГО ФАЙЛА КОЛЛЕКЦИИ !!!!!!!!!!
                 n_results=5,
             )
             

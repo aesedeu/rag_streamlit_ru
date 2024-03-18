@@ -26,9 +26,13 @@ logging.basicConfig(
 @click.command()
 @click.option("-dp", "--data_path", help='Path to your data which will be uploaded to the verctorstore. CSV/TXT formats are supported')
 @click.option("-cn", "--collection_name", help='Collection name in vectorstore')
+@click.option("-cs", "--chunk_size", default=100, help='Size of splitting chunks')
+@click.option("-co", "--chunk_overlap", default=50, help='Size of chunks overlap')
 def main(
     data_path:str,
     collection_name:str,
+    chunk_size:int,
+    chunk_overlap:int
     ):
     assert data_path is not None and collection_name is not None, "Please provide correct 'data_path' and 'collection_name' or type --help for FAQ"
     # data_path = input(f"Введите путь к файлу в директории SOURCE_DOCUMENTS: ")
@@ -36,7 +40,9 @@ def main(
 
     texts = get_texts(
             file_name=data_path,
-            collection_name=collection_name
+            collection_name=collection_name,
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap
         )
 
     # upload_to_vectorstore(

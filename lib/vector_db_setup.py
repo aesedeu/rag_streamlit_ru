@@ -3,11 +3,14 @@ import numpy as np
 import chromadb
 from chromadb.config import Settings
 from chromadb.utils import embedding_functions
-from langchain_community.document_loaders import DataFrameLoader, TextLoader, PDFMinerLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from transformers import AutoTokenizer
-import string
 
+from langchain_community.document_loaders import DataFrameLoader, TextLoader, PDFMinerLoader
+from langchain_community.embeddings import SentenceTransformerEmbeddings
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+
+from transformers import AutoTokenizer
+
+import string
 import os
 import datetime as dt
 import logging
@@ -27,6 +30,11 @@ logging.basicConfig(
     ],
     level=logging.INFO
 )
+
+# EMBEDDINGS_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+# EMBEDDINGS_MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+EMBEDDINGS_MODEL_NAME = "intfloat/multilingual-e5-small"
+emb_func = SentenceTransformerEmbeddings(model_name=EMBEDDINGS_MODEL_NAME) # Модель для создания эмбеддингов
 
 
 def get_texts(
@@ -58,11 +66,15 @@ def get_texts(
     documents = loader.load()  
 
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=250,
+        chunk_size=100,
         chunk_overlap=50,
         length_function=len
     )
 
+    logging.info(f"Chunk size: {chunk_size}")
+    logging.info(f"Chunk overlap: {chunk_overlap}")
+
+    # Альтернативный вариант создания чанков через токенайзер LLM
     # text_splitter = RecursiveCharacterTextSplitter.from_huggingface_tokenizer(
     #     AutoTokenizer.from_pretrained("Open-Orca/Mistral-7B-OpenOrca"),
     #     chunk_size=chunk_size,
@@ -85,8 +97,7 @@ def get_texts(
 
         flag = True
         try:
-            # embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="sentence-transformers/all-MiniLM-L6-v2")
-            embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
+            embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(model_name=EMBEDDINGS_MODEL_NAME)
             logging.info("Загрузка модели для эмбеддингов: SUCCESS")
         except Exception as e:
             logging.info("Ошибка при загрузке модели эмбеддингов:", e)
@@ -180,9 +191,10 @@ def vectorstore_query(collection, source_file_type, question, n_results):
     """
 
     response = collection.query(
-            query_texts=question,
-            n_results=n_results
-        )
+        query_embeddings=emb_func.embed_query(question), # Векторный поиск происходит через эмбеддинг, который создается той же моделью, что и в chromadb
+        # query_texts=question,
+        n_results=n_results
+    )
     
     if source_file_type.lower() == 'csv':
         # убираем одинаковые ответы
