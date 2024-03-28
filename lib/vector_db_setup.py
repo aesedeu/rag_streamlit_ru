@@ -3,18 +3,19 @@ import numpy as np
 import chromadb
 from chromadb.config import Settings
 from chromadb.utils import embedding_functions
-
 from langchain_community.document_loaders import DataFrameLoader, TextLoader, PDFMinerLoader
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-
 from transformers import AutoTokenizer
-
 import string
 import os
 import datetime as dt
 import logging
 from dotenv import load_dotenv
+import yaml
+
+config = yaml.safe_load(open('./config.yaml'))
+
 load_dotenv()
 PROJECT_DIRECTORY = os.getenv('PROJECT_DIRECTORY')
 SOURCE_DOCUMENTS_FOLDER = os.getenv('SOURCE_DOCUMENTS_FOLDER')
@@ -105,13 +106,15 @@ def get_texts(
             
         if flag:
             try:
-                chroma_client = chromadb.HttpClient(settings=Settings(
-                    allow_reset=True,
-                    chroma_api_impl='chromadb.api.fastapi.FastAPI',
-                    chroma_server_host='localhost',
-                    chroma_server_http_port='8000',
-                    anonymized_telemetry=False)
-                )
+                chroma_client = chromadb.HttpClient(
+                    settings=Settings(
+                        allow_reset=config['chromadb']['server_config']['allow_reset'],
+                        chroma_api_impl=config['chromadb']['server_config']['chroma_api_impl'],
+                        chroma_server_host=config['chromadb']['server_config']['chroma_server_host'],
+                        chroma_server_http_port=config['chromadb']['server_config']['chroma_server_http_port'],
+                        anonymized_telemetry=config['chromadb']['server_config']['anonymized_telemetry']
+                        )
+                    )
                 logging.info("Подключение к CHROMADB: SUCCESS")
             except Exception as e:
                 logging.info("Ошибка при подключении к CHROMADB:", e)
@@ -163,13 +166,15 @@ def get_chroma_client():
     
     Returns: chroma_client - the chroma client to connect to the vector store"""
     try:
-        chroma_client = chromadb.HttpClient(settings=Settings(
-            allow_reset=True,
-            chroma_api_impl='chromadb.api.fastapi.FastAPI',
-            chroma_server_host='localhost',
-            chroma_server_http_port='8000',
-            anonymized_telemetry=False)
-        )
+        chroma_client = chromadb.HttpClient(
+            settings=Settings(
+                allow_reset=config['chromadb']['server_config']['allow_reset'],
+                chroma_api_impl=config['chromadb']['server_config']['chroma_api_impl'],
+                chroma_server_host=config['chromadb']['server_config']['chroma_server_host'],
+                chroma_server_http_port=config['chromadb']['server_config']['chroma_server_http_port'],
+                anonymized_telemetry=config['chromadb']['server_config']['anonymized_telemetry']
+                )
+            )
         logging.info("Подключение к CHROMADB: SUCCESS")
         logging.info("Доступны следующие коллекции:")
         for i in chroma_client.list_collections():

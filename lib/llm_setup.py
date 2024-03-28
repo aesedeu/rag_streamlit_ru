@@ -5,6 +5,9 @@ from lib.vector_db_setup import vectorstore_query
 import json
 import datetime
 import time
+import yaml
+
+config = yaml.safe_load(open('./config.yaml'))
 
 def create_input_message(
         question:str,
@@ -18,7 +21,7 @@ def create_input_message(
     tokenizer: AutoTokenizer - токенизатор
     """
 
-    SYSTEM_PROMPT = f"""Ты - русскоязычный ассистент Степан. Отвечаешь на вопросы людей и помогаешь им."""
+    SYSTEM_PROMPT = config['llm']['system_prompt']
 
     QUESTION = question
     chat = [
@@ -53,7 +56,7 @@ def create_input_rag_message(question, tokenizer, collection, source_file_type, 
         question=question,
         n_results=n_results
     )
-    SYSTEM_PROMPT = f"""Ты - русскоязычный ассистент Степан. Отвечаешь на вопросы пользователя, используя только эту информацию: {vector_db_response}."""
+    SYSTEM_PROMPT = config['llm']['system_prompt_rag'].format(vector_db_response)
     # SYSTEM_PROMPT = f"""Ты - пьяный пират, который ищет свой корабль. Разговаривай как пьяный пират."""
 
     QUESTION = question
@@ -70,33 +73,71 @@ def create_input_rag_message(question, tokenizer, collection, source_file_type, 
 
     return input_message
 
-def initialize_lora_model(
+def initialize_model(
         base_model:str,
-        lora_adapter:str,
-        bnb:bool=False
+        bnb:bool
     ):
     """
     Инициализация модели
     
     Args:
     base_model: str - название базовой модели
-    lora_adapter: str - название адаптера LoRA
     bnb: bool - применение квантизации модели с помощью BitsAndBytes
     """
-    bnb_config = BitsAndBytesConfig(
-        load_in_4bit=False, # Загружает модель в 4-битном формате для уменьшения использования памяти.
-        load_in_8bit=True,
-        bnb_4bit_quant_type="fp4", # Указывает тип квантования, в данном случае "nf4" (nf4/dfq/qat/ptq/fp4)
-        bnb_4bit_compute_dtype="float16", # Устанавливает тип данных для вычислений в 4-битном формате как float16.
-        bnb_4bit_use_double_quant=False # Указывает, что не используется двойное квантование.
-    )
-    if bnb==True:
+
+    if bnb:
+        model = AutoModelForCausalLM.from_pretrained(
+            base_model,
+            quantization_config=BitsAndBytesConfig(
+                load_in_4bit=False, # Загружает модель в 4-битном формате для уменьшения использования памяти.
+                load_in_8bit=True,
+                bnb_4bit_quant_type="fp4", # Указывает тип квантования, в данном случае "nf4" (nf4/dfq/qat/ptq/fp4)
+                bnb_4bit_compute_dtype="float16", # Устанавливает тип данных для вычислений в 4-битном формате как float16.
+                bnb_4bit_use_double_quant=False # Указывает, что не используется двойное квантование.
+            ),
+            device_map="cuda"
+        )
+    else:
         model = AutoModelForCausalLM.from_pretrained(
             base_model,
             # load_in_8bit=True,
             # load_in_4bit=True,
-            quantization_config=bnb_config,
-            # torch_dtype=torch.float16,
+            torch_dtype=torch.float16,
+            device_map="cuda"
+        )
+    tokenizer = AutoTokenizer.from_pretrained(base_model)
+    tokenizer.bos_token = "<s>"
+    tokenizer.eos_token = "</s>"
+    tokenizer.pad_token = tokenizer.eos_token
+    tokenizer.padding_side = 'right'
+
+    model.eval()
+    
+    return model, tokenizer
+
+def initialize_lora_model(
+        base_model:str,
+        lora_adapter:str,
+        bnb:bool=False
+    ):
+    """
+    Инициализация модели c LoRA-адаптером
+    
+    Args:
+    base_model: str - название базовой модели
+    lora_adapter: str - название адаптера LoRA
+    bnb: bool - применение квантизации модели с помощью BitsAndBytes
+    """
+    if bnb:
+        model = AutoModelForCausalLM.from_pretrained(
+            base_model,
+            quantization_config=BitsAndBytesConfig(
+                load_in_4bit=False, # Загружает модель в 4-битном формате для уменьшения использования памяти.
+                load_in_8bit=True,
+                bnb_4bit_quant_type="fp4", # Указывает тип квантования, в данном случае "nf4" (nf4/dfq/qat/ptq/fp4)
+                bnb_4bit_compute_dtype="float16", # Устанавливает тип данных для вычислений в 4-битном формате как float16.
+                bnb_4bit_use_double_quant=False # Указывает, что не используется двойное квантование.
+            ),
             device_map="cuda"
         )
         model = PeftModel.from_pretrained(
@@ -120,10 +161,16 @@ def initialize_lora_model(
             device_map="cuda"
         )
 
+    tokenizer = AutoTokenizer.from_pretrained(base_model)
+    tokenizer.bos_token = "<s>"
+    tokenizer.eos_token = "</s>"
+    tokenizer.pad_token = tokenizer.eos_token
+    tokenizer.padding_side = 'right'
+
     model.eval()
     model = model.merge_and_unload() #  ОБЯЗАТЕЛЬНО!!! После загрузки модели в память, нужно вызвать метод merge_and_unload() для слияния адаптеров и выгрузки модели из памяти
 
-    return model
+    return model, tokenizer
 
 def generate_llm_response(
         question:str,
@@ -143,6 +190,7 @@ def generate_llm_response(
     tokenizer: AutoTokenizer - токенизатор
     source_file_type: str - 'csv' или 'txt'
     """
+
     start = time.time()
     
     if collection==None and source_file_type==None and n_results==None:
@@ -154,19 +202,19 @@ def generate_llm_response(
     input_data = {k: v.to("cuda:0") for k, v in input_data.items()}
 
     generation_config = GenerationConfig(
-        bos_token_id = 1,
-        do_sample = True,
-        eos_token_id = 2,
-        max_length = 2048,
-        max_new_tokens = 256,
-        repetition_penalty=1.1,
-        # length_penalty=0.1,
-        no_repeat_ngram_size=15,
-        pad_token_id = 2,
-        temperature = 0.1,
-        top_p = 0.9,
-        top_k= 10,
-        # low_memory=True
+        bos_token_id = config['llm']['generation_config']['bos_token_id'],
+        do_sample = config['llm']['generation_config']['do_sample'],
+        eos_token_id = config['llm']['generation_config']['eos_token_id'],
+        max_length = config['llm']['generation_config']['max_length'],
+        max_new_tokens = config['llm']['generation_config']['max_new_tokens'],
+        repetition_penalty= config['llm']['generation_config']['repetition_penalty'],
+        length_penalty = config['llm']['generation_config']['length_penalty'],
+        no_repeat_ngram_size = config['llm']['generation_config']['no_repeat_ngram_size'],
+        pad_token_id = config['llm']['generation_config']['pad_token_id'],
+        temperature = config['llm']['generation_config']['temperature'],
+        top_p = config['llm']['generation_config']['top_p'],
+        top_k = config['llm']['generation_config']['top_k'],
+        low_memory = config['llm']['generation_config']['low_memory'],
     )
 
     output_data = model.generate(
