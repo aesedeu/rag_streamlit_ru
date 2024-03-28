@@ -1,0 +1,32 @@
+llm:
+  lora_adapter: IlyaGusev/saiga2_13b_lora
+  # lora_adapter: IlyaGusev/saiga_mistral_7b
+
+  base_model: meta-llama/Llama-2-13b-hf
+
+  system_prompt: Ты - русскоязычный ассистент Степан. Отвечаешь на вопросы людей и помогаешь им.
+  system_prompt_rag: "Ты - русскоязычный ассистент Степан. Отвечаешь на вопросы пользователя, используя только эту информацию: {}."
+  generation_config:
+    bos_token_id: 1
+    do_sample: True
+    eos_token_id: 2
+    max_length: 4096
+    max_new_tokens: 256
+    repetition_penalty: 1.1
+    length_penalty: 0.1
+    no_repeat_ngram_size: 15
+    pad_token_id: 2
+    temperature: 0.1
+    top_p: 0.9
+    top_k: 20
+    low_memory: True
+
+chromadb:
+  server_config:
+    allow_reset: True
+    chroma_api_impl: chromadb.api.fastapi.FastAPI
+    chroma_server_host: localhost
+    chroma_server_http_port: 8000
+    anonymized_telemetry: False
+  default_collection_name: example
+  n_results: 5

@@ -36,7 +36,8 @@ printf 'Do you want to run test app without LLM (y/n)?'
 read answer
 if [ "$answer" != "${answer#[Yy]}" ] ;then
     echo "Running app in test mode"
-    streamlit run $PROJECT_DIRECTORY/patterns/no_llm/app_streamlit_no_llm.py
+    # streamlit run $PROJECT_DIRECTORY/test_patterns/no_llm/app_streamlit_no_llm.py
+    python $PROJECT_DIRECTORY/test_patterns/no_llm/app_streamlit_no_llm.py
 else
     echo "done"
 fi
